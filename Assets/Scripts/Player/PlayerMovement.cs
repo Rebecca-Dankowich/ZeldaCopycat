@@ -11,29 +11,25 @@ public class PlayerMovement : MonoBehaviour
     public float jumpForce;
     public float jumpCooldown;
     public float airMultiplier;
-    bool readyToJump;
-
-    [Header("Keybinds")]
-    public KeyCode jumpKey = KeyCode.Space;
 
     [Header("Ground Check")]
     public float playerHeight;
     public LayerMask whatIsGround;
-    bool grounded;
 
     public Transform orientation;
 
-    float horizontalInput;
-    float verticalInput;
-
+    //Private variables
+    private bool grounded;
+    private bool readyToJump = true;
     Vector3 moveDirection;
     Rigidbody rb;
+    private PlayerInputHandler input;
 
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
-        readyToJump = true;
+        input = GetComponent<PlayerInputHandler>();
 
     }
     private void Update()
@@ -42,50 +38,37 @@ public class PlayerMovement : MonoBehaviour
         grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
         Debug.DrawRay(transform.position, Vector3.down * (playerHeight * 0.5f + 0.2f), grounded ? Color.green : Color.red);
 
-        MyInput();
         SpeedControl();
 
         // handle drag
-        if (grounded)
+        rb.linearDamping = grounded ? groundDrag : 0f;
+
+        if (input.JumpTriggered && readyToJump && grounded)
         {
-            rb.linearDamping = groundDrag;
-        }
-        else
-        {
-            rb.linearDamping = 0;
+            readyToJump = false;
+            HandleJump();
+            Invoke(nameof(ResetJump), jumpCooldown);
         }
     }
-
     private void FixedUpdate()
     {
         MovePlayer();
     }
 
-    private void MyInput()
+    private void ResetJump()
     {
-        horizontalInput = Input.GetAxisRaw("Horizontal");
-        verticalInput = Input.GetAxisRaw("Vertical");
-
-        // when to jump
-        if(Input.GetKey(jumpKey) && readyToJump && grounded)
-        {
-            readyToJump = false;
-
-            HandleJump();
-
-            Invoke(nameof(ResetJump), jumpCooldown);
-        }
+        readyToJump = true;
     }
 
     private void MovePlayer()
     {
-        // Calculate movement direction
-        moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
+        // Map 2D input (x = horizontal, y = vertical) to 3D world direction
+        moveDirection = orientation.forward * input.MoveInput.y + orientation.right * input.MoveInput.x;
 
         // On ground
         if (grounded)
         {
-            rb.AddForce(moveDirection * moveSpeed * 10f, ForceMode.Force);
+            rb.AddForce(moveDirection.normalized * moveSpeed * 10f, ForceMode.Force);
         }
         else if(!grounded)
         {
@@ -94,7 +77,7 @@ public class PlayerMovement : MonoBehaviour
             bool gliding = paraglider != null && paraglider.IsGliding();
 
             float multiplier = gliding ? 0f : airMultiplier;
-            rb.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);
+            rb.AddForce(moveDirection.normalized * moveSpeed * 10f * multiplier, ForceMode.Force);
         }
     }
     private void SpeedControl()
@@ -115,11 +98,6 @@ public class PlayerMovement : MonoBehaviour
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
 
         rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
-    }
-
-    private void ResetJump()
-    {
-        readyToJump = true;
     }
 }
 

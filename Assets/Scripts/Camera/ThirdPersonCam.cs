@@ -10,10 +10,14 @@ public class ThirdPersonCam : MonoBehaviour
 
     public float rotationSpeed;
 
+    private PlayerInputHandler input;
+
     private void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        input = player.GetComponent<PlayerInputHandler>();
     }
 
     private void Update()
@@ -23,9 +27,7 @@ public class ThirdPersonCam : MonoBehaviour
         orientation.forward = viewDirection.normalized;
 
         // rotate the player object
-        float horizontalInput = Input.GetAxis("Horizontal");
-        float verticalInput = Input.GetAxis("Vertical");
-        Vector3 inputDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
+        Vector3 inputDirection = orientation.forward * input.MoveInput.y + orientation.right * input.MoveInput.x;
 
         if (inputDirection != Vector3.zero)
         {

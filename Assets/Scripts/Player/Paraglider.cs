@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 public class Paraglider : MonoBehaviour
 {
@@ -6,16 +7,18 @@ public class Paraglider : MonoBehaviour
     public float fallSpeed = -2f;
     public float glideAirMultiplier = 2f;
     public float deploymentDelay = 0.2f;
-    public KeyCode paragliderKey = KeyCode.Space;
 
     [Header("References")]
     public Transform orientation;
 
     private Rigidbody rb;
     private PlayerMovement playerMovement;
+    private PlayerInputHandler input;
+
     private bool isGliding = false;
     private bool grounded;
     private float deployTimer = 0f;
+    private bool wasJumpHeld = false;
 
     public float playerHeight;
     public LayerMask whatIsGround;
@@ -24,6 +27,7 @@ public class Paraglider : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         playerMovement = GetComponent<PlayerMovement>();
+        input = GetComponent<PlayerInputHandler>();
     }
 
     private void Update()
@@ -40,6 +44,7 @@ public class Paraglider : MonoBehaviour
         {
             deployTimer = 0f;
             isGliding = false; // cancel glide on landing
+            wasJumpHeld = false;
         }
         HandleParagliderInput();
     }
@@ -53,16 +58,24 @@ public class Paraglider : MonoBehaviour
     }
     private void HandleParagliderInput()
     {
-        // to deploy player must be airborne and past the deployment delay
-        if (Input.GetKeyDown(paragliderKey) && !grounded && deployTimer > deploymentDelay)
+        if (grounded) return;
+
+        bool jumpHeld = input.JumpHeld;
+
+        bool freshPress = jumpHeld && !wasJumpHeld;     // Detect a fresh press while airborne (wasJumpHeld prevents re-toggling on hold)
+
+        if(freshPress && deployTimer > deploymentDelay)
         {
-            isGliding = !isGliding; // toggle glider
+            isGliding = !isGliding;
         }
 
-        if (grounded)
+        // If player releases the button, cancel the glide
+        if (!jumpHeld)
         {
-            isGliding = false; // force cancel if player lands
+            isGliding = false;
         }
+
+        wasJumpHeld = jumpHeld;
     }
 
     private void ApplyGlide()
@@ -75,9 +88,7 @@ public class Paraglider : MonoBehaviour
 
         rb.AddForce(Vector3.up * Physics.gravity.magnitude * 0.85f, ForceMode.Acceleration);
 
-        float h = Input.GetAxisRaw("Horizontal");
-        float v = Input.GetAxisRaw("Vertical");
-        Vector3 glideDirection = orientation.forward * v + orientation.right * h;
+        Vector3 glideDirection = orientation.forward * input.MoveInput.y + orientation.right * input.MoveInput.x;
         rb.AddForce(glideDirection * glideAirMultiplier, ForceMode.Force);
     }
      // public reference for access to be used in other scripts
