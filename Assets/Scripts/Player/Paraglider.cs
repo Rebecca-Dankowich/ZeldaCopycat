@@ -11,6 +11,10 @@ public class Paraglider : MonoBehaviour
     [Header("References")]
     public Transform orientation;
 
+    [Header("Events")]
+    public UnityEvent onGlideStart;
+    public UnityEvent onGlideStop;
+
     private Rigidbody rb;
     private PlayerMovement playerMovement;
     private PlayerInputHandler input;
@@ -43,7 +47,7 @@ public class Paraglider : MonoBehaviour
         else
         {
             deployTimer = 0f;
-            isGliding = false; // cancel glide on landing
+            SetGliding(false);
             wasJumpHeld = false;
         }
         HandleParagliderInput();
@@ -66,16 +70,28 @@ public class Paraglider : MonoBehaviour
 
         if(freshPress && deployTimer > deploymentDelay)
         {
-            isGliding = !isGliding;
+            SetGliding(!isGliding);
         }
 
         // If player releases the button, cancel the glide
         if (!jumpHeld)
         {
-            isGliding = false;
+            SetGliding(false);
         }
 
         wasJumpHeld = jumpHeld;
+    }
+
+    private void SetGliding(bool value)
+    {
+        if (isGliding == value) return;
+
+        isGliding = value;
+
+        if (isGliding)
+            onGlideStart.Invoke();
+        else
+            onGlideStop.Invoke();
     }
 
     private void ApplyGlide()
