@@ -5,7 +5,6 @@ public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement")]
     public float moveSpeed;
-
     public float groundDrag;
 
     [Header("Jump Settings")]
@@ -29,6 +28,7 @@ public class PlayerMovement : MonoBehaviour
 
     Vector3 moveDirection;
     Rigidbody rb;
+
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -89,6 +89,11 @@ public class PlayerMovement : MonoBehaviour
         }
         else if(!grounded)
         {
+            // Check if paraglider is active
+            Paraglider paraglider = GetComponent<Paraglider>();
+            bool gliding = paraglider != null && paraglider.IsGliding();
+
+            float multiplier = gliding ? 0f : airMultiplier;
             rb.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);
         }
     }
