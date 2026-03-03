@@ -65,6 +65,13 @@ public class PlayerMovement : MonoBehaviour
         // Map 2D input (x = horizontal, y = vertical) to 3D world direction
         moveDirection = orientation.forward * input.MoveInput.y + orientation.right * input.MoveInput.x;
 
+        // Rotate player to face movement direction
+        if (moveDirection != Vector3.zero)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.fixedDeltaTime * 10f);
+        }
+
         // On ground
         if (grounded)
         {
