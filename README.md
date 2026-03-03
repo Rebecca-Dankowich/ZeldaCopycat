@@ -1,10 +1,5 @@
-﻿# ZeldaCopycat
-
 # Acknowledgements
-freepix.com
+freepix.com - Wood texture used for paraglider model
 
-Wood texture used for paraglider model
+Nintendo - Legend of Zelda: Breath of the Wild original game
 
-Nintendo
-
-Legend of Zelda: Breath of the Wild origional game
